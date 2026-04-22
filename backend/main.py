@@ -145,7 +145,7 @@ def gerar_cards_comIA(req:ReqGeracao_IA):
                 {"role": "system", "content": "Você é um assistente que gera apenas JSON puro."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.3 # Mantém a IA focada e menos criativa (ideal para JSON)
+            temperature=0.3 
         )
         texto_resposta = response.choices[0].message.content
         texto_limpeza = texto_resposta.replace("```json", "").replace("```", "").strip()
@@ -231,19 +231,19 @@ def processo_revisao(req: ReqProcessoRevisao):
     stats = supabase.table("user_stats").select("*").eq("user_id", user_id_do_card).execute()
     
     if not stats.data:
-        # Primeiro dia de estudo da vida dele!
+        # Primeiro dia de estudo 
         supabase.table("user_stats").insert({
             "user_id": user_id_do_card, 
             "streak": 1, 
             "ultima_revisao": hoje
         }).execute()
     else:
-        # Já estudou antes, vamos ver se foi hoje
+        # Já estudou antes,  ver se foi hoje
         ultima = stats.data[0].get("ultima_revisao")
         streak_atual = stats.data[0].get("streak", 0)
         
         if ultima != hoje:
-            # É a primeira revisão do dia de hoje! Ganhou +1 no Streak.
+            # É a primeira revisão  de hoje +1 no Streak.
             supabase.table("user_stats").update({
                 "streak": streak_atual + 1, 
                 "ultima_revisao": hoje
@@ -282,7 +282,7 @@ def listar_cards_do_deck(deck_id: str):
     res = supabase.table("flashcards").select("*").eq("deck_id", deck_id).execute()
     return {"status": "sucesso", "cards": res.data}
 
-# 3. Criar Card Manual (Pode usar o mesmo modelo do Card IA ou um simplificado)
+# 3. Criar Card Manual 
 class CardSimples(BaseModel):
     deck_id: str
     user_id: str
@@ -303,7 +303,7 @@ def criar_card_manual(card: CardSimples):
     except Exception as e:
         return {"status": "erro", "detalhes": str(e)}
     
-from datetime import datetime # (Certifique-se de que isso está lá em cima nos imports)
+from datetime import datetime 
 
 @app.get("/estatisticas/{user_id}")
 def obter_estatisticas(user_id: str):
@@ -312,12 +312,12 @@ def obter_estatisticas(user_id: str):
         res = supabase.table("flashcards").select("intervalo, erros_consecutivos, frente").eq("user_id", user_id).execute()
         all_cards = res.data if res.data else []
         
-        # 2. Cálculo de Maturidade
+        #  Cálculo de desempenho
         aprendendo = len([c for c in all_cards if c.get('intervalo', 0) < 3])
         familiar = len([c for c in all_cards if 3 <= c.get('intervalo', 0) <= 21])
         dominado = len([c for c in all_cards if c.get('intervalo', 0) > 21])
         
-        # 3. Filtra os Sanguessugas direto no Python para garantir
+        # 3. Filtra os p fracos direto no Python para garantir
         pontos_fracos = [{"frente": c["frente"], "erros_consecutivos": c["erros_consecutivos"]} 
                    for c in all_cards if c.get('erros_consecutivos', 0) >= 3]
 
@@ -346,7 +346,7 @@ def obter_streak(user_id: str):
         streak_atual = dados.get("streak", 0)
         ultima_revisao_str = dados.get("ultima_revisao")
         
-        # Lógica de proteção: se ele ficou dias sem entrar, o streak "quebra" visualmente
+        
         if ultima_revisao_str:
             ultima_revisao = date.fromisoformat(ultima_revisao_str)
             hoje = date.today()
@@ -384,8 +384,8 @@ def tutor_ia(pedido: PedidoTutor):
             messages=[
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=150, # Restringe a resposta a cerca de 6 linhas (rápido e barato)
-            temperature=0.7 # Um pouco mais de temperatura para o tutor ser didático
+            max_tokens=150, # Restringe a resposta a cerca de 6 linhas
+            temperature=0.7 #
         )
         
         resposta_ia = response.choices[0].message.content
