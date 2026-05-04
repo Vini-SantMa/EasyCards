@@ -1,7 +1,7 @@
-EasyCards
+# EasyCards https://easycards-frontend.vercel.app/
 
 O EasyCards é uma aplicação de flashcards voltada para o estudo através de Repetição Espaçada. O projeto visa simplificar a criação de cards utilizando Inteligência Artificial para extrair conceitos de textos e oferecer suporte pedagógico durante as revisões.  
-Stack Tecnológica
+## Stack Tecnológica
 
     Frontend: React 18, Vite e CSS3.  
 
@@ -13,7 +13,7 @@ Stack Tecnológica
 
     Autenticação: Supabase Auth.  
 
-Como Funciona
+##Como Funciona
 
     Criação: O usuário pode criar cards manualmente (com suporte a anexos de referência) ou fornecer um texto para que a IA gere automaticamente sugestões de perguntas e respostas.  
 
@@ -23,7 +23,7 @@ Como Funciona
 
     Tutor: Em caso de dificuldade, o usuário pode solicitar uma explicação breve (até 3 linhas) gerada por IA sobre o conteúdo do card.  
 
-Instalação e Execução
+##Instalação e Execução
 Backend
 
     Acesse o diretório /backend.  
