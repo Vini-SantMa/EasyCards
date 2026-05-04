@@ -42,6 +42,14 @@ class AlgoritmoRepEspacada(EstrategiaRevisao):
         else:
             intervalo_novo = 0
         return datetime.now() + timedelta(days=intervalo_novo), intervalo_novo
+        
+class AlgoritmoIA(EstrategiaRevisao):
+    def calculo_proxima(self, card, nota: int):
+        if nota >= 3:
+            intervalo_novo = max(1, round(card.intervalo * 1.5))
+        else: 
+            intervalo_novo = 0
+        return datetime.now() + timedelta(days=intervalo_novo), intervalo_novo
 
 # Classes Basicas - Pilares    
 class BaseCard(ABC):
@@ -56,7 +64,10 @@ class BaseCard(ABC):
         return data_proxima
 
 class Cardmanual(BaseCard):
-    pass
+    def __init__(self, frente, verso, estrategia, anexo=None):
+        super().__init__(frente, verso, estrategia)
+        self.anexo = anexo
+        
 class CardIA(BaseCard):
     def __init__(self, frente, verso, estrategia, contexto):
         super().__init__(frente, verso, estrategia)
@@ -145,7 +156,7 @@ def gerar_cards_comIA(req:ReqGeracao_IA):
                 {"role": "system", "content": "Você é um assistente que gera apenas JSON puro."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.3 
+            temperature=0.3 # Mantém a IA focada e menos criativa (ideal para JSON)
         )
         texto_resposta = response.choices[0].message.content
         texto_limpeza = texto_resposta.replace("```json", "").replace("```", "").strip()
@@ -207,13 +218,19 @@ def processo_revisao(req: ReqProcessoRevisao):
     
     res = supabase.table("flashcards").select("*").eq("id", req.card_id).single().execute()
     dados = res.data #Buscando ocard atual dentro do banco de dados
+
+    if dados.get('tipo') == 'IA':
+        algoritmo = AlgoritmoIA()
+    else:
+        algoritmo = AlgoritmoRepEspacada()
+        
     
     erros_atuais = dados.get('erros_consecutivos', 0)
     if req.nota < 3:
         novos_erros = erros_atuais + 1
     else:
         novos_erros = 0
-    algoritmo = AlgoritmoRepEspacada()
+   # algoritmo = AlgoritmoRepEspacada()
     
     card_estudo = Cardmanual(dados['frente'], dados['verso'], algoritmo)
     card_estudo.intervalo = dados['intervalo'] # cria o objeto do card e pega o estado dele do banco
@@ -231,19 +248,19 @@ def processo_revisao(req: ReqProcessoRevisao):
     stats = supabase.table("user_stats").select("*").eq("user_id", user_id_do_card).execute()
     
     if not stats.data:
-        # Primeiro dia de estudo 
+        # Primeiro dia de estudo da vida dele!
         supabase.table("user_stats").insert({
             "user_id": user_id_do_card, 
             "streak": 1, 
             "ultima_revisao": hoje
         }).execute()
     else:
-        # Já estudou antes,  ver se foi hoje
+        # Já estudou antes, vamos ver se foi hoje
         ultima = stats.data[0].get("ultima_revisao")
         streak_atual = stats.data[0].get("streak", 0)
         
         if ultima != hoje:
-            # É a primeira revisão  de hoje +1 no Streak.
+            # É a primeira revisão do dia de hoje! Ganhou +1 no Streak.
             supabase.table("user_stats").update({
                 "streak": streak_atual + 1, 
                 "ultima_revisao": hoje
@@ -270,24 +287,25 @@ def criar_deck(deck: NovoDeck):
     except Exception as e:
         return {"status": "erro", "detalhes": str(e)}
 
-# 1. Listar todos os Decks
+# 1 Listar todos os Decks
 @app.get("/decks/{user_id}")
 def listar_decks(user_id: str):
     res = supabase.table("decks").select("*").eq("user_id", user_id).execute()
     return {"status": "sucesso", "decks": res.data}
 
-# 2. Listar cards de um deck específico
+# 2 Listar cards de um deck específico
 @app.get("/decks/{deck_id}/cards")
 def listar_cards_do_deck(deck_id: str):
     res = supabase.table("flashcards").select("*").eq("deck_id", deck_id).execute()
     return {"status": "sucesso", "cards": res.data}
 
-# 3. Criar Card Manual 
+# 3 Criar Card Manual 
 class CardSimples(BaseModel):
     deck_id: str
     user_id: str
     frente: str
     verso: str
+    anexo: str = None
 
 @app.post("/criar-card-manual")
 def criar_card_manual(card: CardSimples):
@@ -297,13 +315,14 @@ def criar_card_manual(card: CardSimples):
             "user_id": card.user_id,
             "frente": card.frente,
             "verso": card.verso,
-            "tipo": "manual"
+            "tipo": "manual", 
+            "metadata": card.anexo
         }).execute()
         return {"status": "sucesso"}
     except Exception as e:
         return {"status": "erro", "detalhes": str(e)}
     
-from datetime import datetime 
+from datetime import datetime # (Certifique-se de que isso está lá em cima nos imports)
 
 @app.get("/estatisticas/{user_id}")
 def obter_estatisticas(user_id: str):
@@ -312,12 +331,12 @@ def obter_estatisticas(user_id: str):
         res = supabase.table("flashcards").select("intervalo, erros_consecutivos, frente").eq("user_id", user_id).execute()
         all_cards = res.data if res.data else []
         
-        #  Cálculo de desempenho
+        # 2. Cálculo de Maturidade
         aprendendo = len([c for c in all_cards if c.get('intervalo', 0) < 3])
         familiar = len([c for c in all_cards if 3 <= c.get('intervalo', 0) <= 21])
         dominado = len([c for c in all_cards if c.get('intervalo', 0) > 21])
         
-        # 3. Filtra os p fracos direto no Python para garantir
+        # 3. Filtra os Sanguessugas direto no Python para garantir
         pontos_fracos = [{"frente": c["frente"], "erros_consecutivos": c["erros_consecutivos"]} 
                    for c in all_cards if c.get('erros_consecutivos', 0) >= 3]
 
@@ -346,7 +365,7 @@ def obter_streak(user_id: str):
         streak_atual = dados.get("streak", 0)
         ultima_revisao_str = dados.get("ultima_revisao")
         
-        
+        # Lógica de proteção: se ele ficou dias sem entrar, o streak "quebra" visualmente
         if ultima_revisao_str:
             ultima_revisao = date.fromisoformat(ultima_revisao_str)
             hoje = date.today()
@@ -373,7 +392,7 @@ def tutor_ia(pedido: PedidoTutor):
         
         Ele teve dificuldade em lembrar ou entender. Em no máximo 3 linhas (seja muito muito breve), 
         dê uma dica mnemônica, uma analogia simples ou um contexto rápido para ajudar a fixar a informação.
-        Não repita a resposta inteira, dê a explicação, a dica, o que realmente vai ajudar.
+        Não repita a resposta inteira, dê a explicação, a dica, o que realmente vai ajudar e seja séria, voce é um tutor de estudos, não precisa de gracinhas. Só entregue explicacoes corretas.
         """
         '''
         resposta_ia = model.generate_content(prompt,generation_config=GenerationConfig(
@@ -384,8 +403,8 @@ def tutor_ia(pedido: PedidoTutor):
             messages=[
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=150, # Restringe a resposta a cerca de 6 linhas
-            temperature=0.7 #
+            max_tokens=150, # Restringe a resposta a cerca de 6 linhas (rápido e barato)
+            temperature=0.7 # Um pouco mais de temperatura para o tutor ser didático
         )
         
         resposta_ia = response.choices[0].message.content

@@ -101,7 +101,7 @@ function App() {
   const enviarNota = async (nota) => {
     setExplicacaoTutor(null);
     const card = cardsRevisao[cardAtualIdx];
-    await fetch('https://easycards-api.onrender.com/processar-revisao', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ card_id: card.id, nota: nota, user_id: session.user.id}) });
+    await fetch('https://easycards-api.onrender.com/processo-revisao', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ card_id: card.id, nota: nota, user_id: session.user.id}) });
     
     if (cardAtualIdx < cardsRevisao.length - 1) { 
       setCardAtualIdx(cardAtualIdx + 1); 
@@ -214,11 +214,17 @@ function App() {
               <h4>✍️ Criar Manualmente</h4>
               <input className="full-input" placeholder="Digite a Pergunta..." id="manualFrente" />
               <textarea className="full-input" placeholder="Digite a Resposta..." rows="3" id="manualVerso" />
+
+              <input className="full-input" placeholder="Link, Contexto ou Referência (Opcional)..." id="manualAnexo" />
+              
               <button className="btn-save-manual" onClick={async () => {
                 if (!idDeckAtivo) return alert("Defina o Deck primeiro!");
-                const f = document.getElementById('manualFrente').value; const v = document.getElementById('manualVerso').value;
-                await fetch('https://easycards-api.onrender.com/criar-card-manual', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ deck_id: idDeckAtivo, user_id: session.user.id, frente: f, verso: v }) });
-                alert("Salvo!"); document.getElementById('manualFrente').value = ''; document.getElementById('manualVerso').value = '';
+          
+                const f = document.getElementById('manualFrente').value;
+                const v = document.getElementById('manualVerso').value;
+                const a = document.getElementById('manualAnexo').value;
+                await fetch('https://easycards-api.onrender.com/criar-card-manual', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ deck_id: idDeckAtivo, user_id: session.user.id, frente: f, verso: v, anexo: a }) });
+                alert("Salvo!"); document.getElementById('manualFrente').value = ''; document.getElementById('manualVerso').value = ''; document.getElementById('manualAnexo').value = '';
               }}>Salvar Card Manual</button>
             </div>
             <div className="method-card ia">
@@ -255,6 +261,11 @@ function App() {
                 <div>
                   <hr className="card-divider"/>
                   <p className="card-verso">{cardsRevisao[cardAtualIdx].verso}</p>
+                   {cardsRevisao[cardAtualIdx].metadata && ( <div className="card-metadata-box">
+                     <p className="metadata-label">🔗 Referência de Estudo:</p>
+                     <p className="metadata-content">{cardsRevisao[cardAtualIdx].metadata}</p>
+                   </div>
+                      )}
                   <div className="btn-group">
                     <button onClick={() => enviarNota(0)} className="btn-note btn-red">0 - Errei</button>
                     <button onClick={() => enviarNota(3)} className="btn-note btn-blue">3 - Difícil</button>
