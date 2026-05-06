@@ -40,10 +40,23 @@ Frontend
 
     Acesse o diretório /frontend.  
 
+
     Instale as dependências: npm install.  
 
     Configure o cliente do Supabase no arquivo supabaseClient.js.  
 
     Execute: npm start ou npm run dev.
+
+## Padrão Criacional: Abstract Factory 
+
+## Para que serve?
+O Abstract Factory serve para garantir a criação de "famílias" de objetos que precisam obrigatoriamente trabalhar juntos. Em vez de criar peças soltas e correr o risco de montá-las de forma incompatível, o padrão centraliza a lógica em uma fábrica que entrega um "combo" completo. É como um kit: ele garante que os componentes sempre combinem perfeitamente entre si.
+
+## Por que a escolha?
+A escolha deste padrão se justifica por uma inconsistência identificada no código original na rota de revisão: o sistema recuperava o algoritmo da IA, mas tentava instanciá-lo dentro de um Cardmanual. O Abstract Factory resolve esse problema através de fábricas que definem "combos" consistentes.
+
+    Essa estratégia elimina a necessidade de condicionais (if/else) confusos no código principal 
+    e garante que os tipos de cards e as lógicas de revisão sejam sempre compatíveis, deixando o 
+    sistema pronto para expansões seguras.
 
 Para explicações detalhadas e aprofundadas do projeto, acesse o arquivo DOCUMENTACAO.md, disponibilizado neste repositório.
