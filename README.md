@@ -52,11 +52,17 @@ Frontend
 ## Para que serve?
 O Abstract Factory serve para garantir a criação de "famílias" de objetos que precisam obrigatoriamente trabalhar juntos. Em vez de criar peças soltas e correr o risco de montá-las de forma incompatível, o padrão centraliza a lógica em uma fábrica que entrega um "combo" completo. É como um kit: ele garante que os componentes sempre combinem perfeitamente entre si.
 
-## Por que a escolha?
-A escolha deste padrão se justifica por uma inconsistência identificada no código original na rota de revisão: o sistema recuperava o algoritmo da IA, mas tentava instanciá-lo dentro de um Cardmanual. O Abstract Factory resolve esse problema através de fábricas que definem "combos" consistentes.
+## Onde será aplicado e por que a escolha?
+O padrão será aplicado para refatorar a função processo_revisao (na rota /processo-revisao), substituindo a criação direta dos objetos por uma nova estrutura baseada na classe FabricaDeCards. A escolha se justifica por um bug de inconsistência identificado exatamente nessa rota do código original: o sistema recuperava o algoritmo da IA corretamente, mas acabava instanciando-o de forma engessada dentro de uma classe Cardmanual.
 
-    Essa estratégia elimina a necessidade de condicionais (if/else) confusos no código principal 
-    e garante que os tipos de cards e as lógicas de revisão sejam sempre compatíveis, deixando o 
-    sistema pronto para expansões seguras.
+O Abstract Factory resolve esse problema delegando a criação para fábricas específicas que definem "combos" consistentes:
+
+    Fábrica Manual: Responsável pelo conjunto Cardmanual + AlgoritmoRepEspacada.
+
+    Fábrica IA: Responsável pelo conjunto CardIA + AlgoritmoIA.
+    
+Essa estratégia elimina a necessidade de condicionais (if/else) confusos no código principal e garante que os tipos de cards e as lógicas de revisão sejam sempre compatíveis, deixando o sistema pronto para expansões seguras.
+
+
 
 Para explicações detalhadas e aprofundadas do projeto, acesse o arquivo DOCUMENTACAO.md, disponibilizado neste repositório.
